@@ -9,4 +9,9 @@ use Illuminate\Routing\Controller as BaseController;
 class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
+
+    public function errorCodeId()
+    {
+        return rand(100000, 999999) . ' - ' . time();
+    }
 }
