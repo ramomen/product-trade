@@ -70,7 +70,6 @@ class OfferController extends Controller
 
     public function show($id)
     {
-        dd($id);
         if (!is_numeric($id)) {
             $id = $this->getNumericId($id);
             if (!is_numeric($id)) {
