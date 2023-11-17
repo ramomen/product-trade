@@ -4,14 +4,19 @@ This section guides you through the initial setup of the project, including conf
 
 ## PostgreSQL Configuration
 
-To set up PostgreSQL for this project, you will need to configure your database connection settings. Use the following environment variables in your `.env` file:
+To set up PostgreSQL for this project, you will need to configure your database connection settings. Use the 
+following environment variables in your `.env` file:
 
+
+```bash
 DB_CONNECTION=pgsql
 DB_HOST=localhost
 DB_PORT=5433
 DB_DATABASE=database
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
+```
+
 
 
 Make sure to replace the values according to your PostgreSQL installation and desired database settings.
