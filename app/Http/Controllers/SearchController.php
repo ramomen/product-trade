@@ -39,6 +39,7 @@ class SearchController extends Controller
 
         if ($products->isEmpty()) {
             return response()->json([
+                'status' => 'error',
                 'message' => 'Products not found',
             ], 404);
         }

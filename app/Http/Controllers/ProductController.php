@@ -41,7 +41,11 @@ class ProductController extends Controller
         $this->validateRequest($request);
 
         try {
-            $product = Product::create($request->all());
+            $product = Product::create([
+                'name' => $request->name,
+                'price' => (float) $request->price,
+                'category' => $request->category
+            ]);
             return response()->json([
                 'status' => 'success',
                 'data' => ProductCollection::collection([$product])[0]
@@ -106,7 +110,7 @@ class ProductController extends Controller
             }
             $product->update([
                 'name' => $request->name,
-                'price' => $request->price,
+                'price' =>(float)  $request->price,
                 'category' => $request->category
             ]);
             return response()->json([

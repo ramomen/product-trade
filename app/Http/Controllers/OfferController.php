@@ -31,7 +31,10 @@ class OfferController extends Controller
                 'message' => 'Offers not found',
             ], 404);
         }
-        return response()->json(OfferCollection::collection($offers), 200);
+        return response()->json([
+            'status' => 'success',
+            'data' => OfferCollection::collection($offers)
+        ], 200);
     }
 
     public function store(Request $request)
@@ -49,7 +52,7 @@ class OfferController extends Controller
             $offer = Offer::create([
                 'product_id' => $request->productId,
                 'seller_id' => $request->sellerId,
-                'price' => $request->price,
+                'price' => (float) $request->price,
                 'condition' => $request->condition,
                 'availability' => $request->availability,
             ]);
@@ -73,7 +76,7 @@ class OfferController extends Controller
             if (!is_numeric($id)) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Invalid offer id',    
+                    'message' => 'Invalid offer id',
                 ], 400);
             }
         }
@@ -86,7 +89,10 @@ class OfferController extends Controller
                 'message' => 'Offer not found',
             ], 404);
         }
-        return response()->json(OfferCollection::collection($offer), 200);
+        return response()->json([
+            'status' => 'success',
+            'data' => OfferCollection::collection([$offer])[0]
+        ], 200);
     }
 
     public function update(Request $request, $id)
@@ -130,11 +136,14 @@ class OfferController extends Controller
             $offer->update([
                 'product_id' => $productId,
                 'seller_id' => $request->sellerId,
-                'price' => $request->price,
+                'price' => (float) $request->price,
                 'condition' => $request->condition,
                 'availability' => $request->availability,
             ]);
-            return response()->json($offer, 200);
+            return response()->json([
+                'status' => 'success',
+                'data' => OfferCollection::collection([$offer])[0]
+            ], 200);
         } catch (\Exception $e) {
             $errorCode = $this->errorCodeId();
             Log::error('OfferController@update - ' . $errorCode . ' - ' . $e->getMessage());
