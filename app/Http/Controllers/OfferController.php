@@ -171,11 +171,12 @@ class OfferController extends Controller
             $offer->delete();
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            Log::error('OfferController@destroy - ' . $this->errorCodeId() . ' - ' . $e->getMessage());
+            $errorCode = $this->errorCodeId();
+            Log::error('OfferController@destroy - ' . $errorCode . ' - ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'Offer deletion failed',
-                'errorCode' => $this->errorCodeId(),
+                'errorCode' => $errorCode,
             ], 400);
         }
     }
