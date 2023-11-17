@@ -7,6 +7,8 @@ use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Http\Resources\OrderCollection;
+
 
 class OrderController extends Controller
 {
@@ -14,8 +16,8 @@ class OrderController extends Controller
     {
         $rules = [
             'offerId' => 'required',
-            'quantity' => 'required',
-            'orderDate' => 'datetime'
+            'quantity' => 'required|numeric',
+            'orderDate' => 'date'
         ];
         $this->validate($request, $rules);
     }
@@ -23,73 +25,148 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::all();
-        return response()->json($orders, 200);
+        return response()->json([
+            'status' => 'success',
+            'data' => OrderCollection::collection($orders)
+        ], 200);
     }
 
     public function store(Request $request)
     {
         $this->validateRequest($request);
         try {
-            $offer = Offer::find($request->offerId);
+            $offerId = $request->offerId;
+
+            if (!is_numeric($offerId)) {
+                $offerId = $this->getOfferNumericId($offerId);
+                if (!is_numeric($offerId)) {
+                    return response()->json([
+                        'message' => 'Invalid offer id.',
+                    ], 400);
+                }
+            }
+
+            $offer = Offer::find($offerId);
             if (is_null($offer)) {
                 return response()->json([
                     'message' => 'Offer not found.',
                 ], 404);
             }
+
             $order = Order::create([
-                'offerId' => $request->offerId,
-                'quantity' => $request->quantity,
-                'orderDate' => Carbon::parse($request->orderDate)->format('Y-m-d H:i:s') ?? Carbon::now()->format('Y-m-d H:i:s')
+                'offer_id' => $offerId,
+                'quantity' => (int) $request->quantity,
+                'order_date' => Carbon::parse($request->orderDate)->format('Y-m-d') ?? Carbon::now()->format('Y-m-d')
             ]);
-            return response()->json($order, 201);
+            return response()->json([
+                'status' => 'success',
+                'data' => OrderCollection::collection([$order])[0]
+            ], 201);
         } catch (\Exception $e) {
-            Log::error('OrderController@store - ' . $this->errorCodeId() . ' - ' . $e->getMessage());
-            return response()->json($e->getMessage(), 400);
+            $errorCode = $this->errorCodeId();
+            Log::error('OrderController@store - ' . $errorCode . ' - ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error creating order.',
+                'errorCode' => $errorCode,
+            ], 400);
         }
     }
 
     public function show($id)
     {
-        $order = Order::find($id);
+        if (!is_numeric($id)) {
+            $id = $this->getNumericId($id);
+            if (!is_numeric($id)) {
+                return response()->json([
+                    'message' => 'Invalid order id.',
+                ], 400);
+            }
+        }
+
+        $order = Order::where('id', $id)->get();
         if (is_null($order)) {
             return response()->json([
                 'message' => 'Order not found.',
             ], 404);
         }
-        return response()->json($order, 200);
+        return response()->json([
+            'status' => 'success',
+            'data' => OrderCollection::collection($order)[0]
+        ], 200);
     }
 
     public function update(Request $request, $id)
     {
+        if (!is_numeric($id)) {
+            $id = $this->getNumericId($id);
+            if (!is_numeric($id)) {
+                return response()->json([
+                    'message' => 'Invalid order id.',
+                ], 400);
+            }
+        }
+
         $this->validateRequest($request);
         try {
             $order = Order::find($id);
+
             if (is_null($order)) {
                 return response()->json([
                     'message' => 'Order not found.',
                 ], 404);
             }
-            $offer = Offer::find($request->offerId);
+
+            $offerId = $request->offerId;
+
+            if (!is_numeric($offerId)) {
+                $offerId = $this->getOfferNumericId($offerId);
+                if (!is_numeric($offerId)) {
+                    return response()->json([
+                        'message' => 'Invalid offer id.',
+                    ], 400);
+                }
+            }
+
+            $offer = Offer::find($offerId);
             if (is_null($offer)) {
                 return response()->json([
                     'message' => 'Offer not found.',
                 ], 404);
             }
+
             $order->update([
-                'offerId' => $request->offerId,
-                'quantity' => $request->quantity,
-                'orderDate' => Carbon::parse($request->orderDate)->format('Y-m-d H:i:s') ?? Carbon::now()->format('Y-m-d H:i:s')
+                'offer_id' => $offerId,
+                'quantity' => (int) $request->quantity,
+                'order_date' => Carbon::parse($request->orderDate)->format('Y-m-d') ?? Carbon::now()->format('Y-m-d')
             ]);
-            return response()->json($order, 200);
+            return response()->json([
+                'status' => 'success',
+                'data' => OrderCollection::collection([$order])[0]
+            ], 200);
         } catch (\Exception $e) {
-            Log::error('OrderController@update - ' . $this->errorCodeId() . ' - ' . $e->getMessage());
-            return response()->json($e->getMessage(), 400);
+            $errorCode = $this->errorCodeId();
+            Log::error('OrderController@update - ' . $errorCode . ' - ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error updating order.',
+                'errorCode' => $errorCode,
+            ], 400);
         }
     }
 
     public function destroy($id)
     {
         try {
+            if (!is_numeric($id)) {
+                $id = $this->getNumericId($id);
+                if (!is_numeric($id)) {
+                    return response()->json([
+                        'message' => 'Invalid order id.',
+                    ], 400);
+                }
+            }
+
             $order = Order::find($id);
             if (is_null($order)) {
                 return response()->json([
@@ -99,8 +176,24 @@ class OrderController extends Controller
             $order->delete();
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            Log::error('OrderController@destroy - ' . $this->errorCodeId() . ' - ' . $e->getMessage());
-            return response()->json($e->getMessage(), 400);
+            $errorCode = $this->errorCodeId();
+            Log::error('OrderController@destroy - ' . $errorCode . ' - ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error deleting order.',
+                'errorCode' => $errorCode,
+            ], 400);
         }
+    }
+
+
+    private function getNumericId($id)
+    {
+        return substr($id, 3);
+    }
+
+    private function getOfferNumericId($id)
+    {
+        return substr($id, 2);
     }
 }

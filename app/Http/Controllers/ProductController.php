@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProductCollection;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +15,7 @@ class ProductController extends Controller
         $rules = [
             'name' => 'required|min:3',
             'price' => 'required|numeric',
-            'description' => 'required|min:10'
+            'category' => 'required|min:3'
         ];
         $this->validate($request, $rules);
     }
@@ -28,7 +29,10 @@ class ProductController extends Controller
                 'message' => 'Product not found.',
             ], 404);
         }
-        return response()->json($products, 200);
+        return response()->json([
+            'status' => 'success',
+            'data' => ProductCollection::collection($products)
+        ], 200);
     }
 
     public function store(Request $request)
@@ -37,23 +41,42 @@ class ProductController extends Controller
 
         try {
             $product = Product::create($request->all());
-            return response()->json($product, 201);
+            return response()->json([
+                'status' => 'success',
+                'data' => ProductCollection::collection([$product])[0]
+            ], 201);
         } catch (\Exception $e) {
-            $errorCodeId = $this->errorCodeId();
-            Log::error('ProductController@store - ' . $errorCodeId . ' - ' . $e->getMessage());
-            return response()->json($e->getMessage(), 400);
+            $errorCode = $this->errorCodeId();
+            Log::error('ProductController@store - ' . $errorCode . ' - ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Product creation failed',
+                'errorCode' => $errorCode,
+            ], 400);
         }
     }
 
     public function show($id)
     {
+        if (!is_numeric($id)) {
+            $id = $this->getNumericId($id);
+            if (!is_numeric($id)) {
+                return response()->json([
+                    'message' => 'Invalid product id.',
+                ], 400);
+            }
+        }
+
         $product = Product::find($id);
         if (!$product) {
             return response()->json([
                 'message' => 'Product not found.',
             ], 404);
         }
-        return response()->json($product, 200);
+        return response()->json([
+            'status' => 'success',
+            'data' => ProductCollection::collection([$product])[0]
+        ], 200);
     }
 
     public function update(Request $request, $id)
@@ -61,20 +84,36 @@ class ProductController extends Controller
         $this->validateRequest($request);
 
         try {
+
+            if (!is_numeric($id)) {
+                $id = $this->getNumericId($id);
+                if (!is_numeric($id)) {
+                    return response()->json([
+                        'message' => 'Invalid product id.',
+                    ], 400);
+                }
+            }
             $product = Product::find($id);
             if (is_null($product)) {
                 return response()->json([
                     'message' => 'Product not found.',
                 ], 404);
             }
-            $product->update($request->all());
-            return response()->json($product, 200);
+            $product->update([
+                'name' => $request->name,
+                'price' => $request->price,
+                'category' => $request->category
+            ]);
+            return response()->json([
+                'status' => 'success',
+                'data' => ProductCollection::collection([$product])[0]
+            ], 200);
         } catch (\Exception $e) {
-            $errorCodeId = $this->errorCodeId();
-            Log::error('ProductController@update - ' . $errorCodeId . ' - ' . $e->getMessage());
+            $errorCode = $this->errorCodeId();
+            Log::error('ProductController@update - ' . $errorCode . ' - ' . $e->getMessage());
             return response()->json([
                 'message' => 'Product update failed',
-                'errorCode' => $this->errorCodeId(),
+                'errorCode' => $errorCode
             ], 400);
         }
     }
@@ -82,6 +121,15 @@ class ProductController extends Controller
     public function destroy($id)
     {
         try {
+            if (!is_numeric($id)) {
+                $id = $this->getNumericId($id);
+                if (!is_numeric($id)) {
+                    return response()->json([
+                        'message' => 'Invalid product id.',
+                    ], 400);
+                }
+            }
+
             $product = Product::find($id);
             if (is_null($product)) {
                 return response()->json([
@@ -91,12 +139,17 @@ class ProductController extends Controller
             $product->delete();
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $errorCodeId = $this->errorCodeId();
-            Log::error('ProductController@destroy - ' . $errorCodeId . ' - ' . $e->getMessage());
+            $errorCode = $this->errorCodeId();
+            Log::error('ProductController@destroy - ' . $errorCode . ' - ' . $e->getMessage());
             return response()->json([
                 'message' => 'Product deletion failed',
-                'errorCode' => $this->errorCodeId(),
+                'errorCode' => $errorCode,
             ], 400);
         }
+    }
+
+    private function getNumericId($id)
+    {
+        return substr($id, 1);
     }
 }

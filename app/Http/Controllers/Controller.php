@@ -12,6 +12,6 @@ class Controller extends BaseController
 
     public function errorCodeId()
     {
-        return rand(100000, 999999) . ' - ' . time();
+        return rand(100000, 999999) . '-' . time();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\OfferCollection;
 use App\Models\Offer;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -15,8 +16,8 @@ class OfferController extends Controller
             'productId' => 'required',
             'sellerId' => 'required',
             'price' => 'required',
-            'condition' => 'required',
-            'availability' => 'required'
+            'condition' => 'required|in:new,used',
+            'availability' => 'required|in:in stock,out of stock'
         ];
         $this->validate($request, $rules);
     }
@@ -29,7 +30,7 @@ class OfferController extends Controller
                 'message' => 'Offers not found',
             ], 404);
         }
-        return response()->json($offers, 200);
+        return response()->json(OfferCollection::collection($offers), 200);
     }
 
     public function store(Request $request)
@@ -43,20 +44,37 @@ class OfferController extends Controller
                 ], 404);
             }
 
-            $offer = Offer::create($request->all());
+            $offer = Offer::create([
+                'product_id' => $request->productId,
+                'seller_id' => $request->sellerId,
+                'price' => $request->price,
+                'condition' => $request->condition,
+                'availability' => $request->availability,
+            ]);
             return response()->json($offer, 201);
         } catch (\Exception $e) {
-            Log::error('OfferController@store - ' . $this->errorCodeId() . ' - ' . $e->getMessage());
+            $errorCode = $this->errorCodeId();
+            Log::error('OfferController@store - ' . $errorCode . ' - ' . $e->getMessage());
             return response()->json([
                 'message' => 'Offer creation failed: ',
-                'errorCode' => $this->errorCodeId(),
+                'errorCode' => $errorCode,
+                'error' => $e->getMessage(),
             ], 400);
         }
     }
 
     public function show($id)
     {
-        $offer = Offer::where('offerId', $id)
+        dd($id);
+        if (!is_numeric($id)) {
+            $id = $this->getNumericId($id);
+            if (!is_numeric($id)) {
+                return response()->json([
+                    'message' => 'Invalid offer id',    
+                ], 400);
+            }
+        }
+        $offer = Offer::where('id', $id)
             ->with('product')
             ->get();
         if (!$offer) {
@@ -64,17 +82,21 @@ class OfferController extends Controller
                 'message' => 'Offer not found',
             ], 404);
         }
-        return response()->json($offer, 200);
+        return response()->json(OfferCollection::collection($offer), 200);
     }
 
     public function update(Request $request, $id)
     {
-        if (!is_numeric($id)) {
-            return response()->json([
-                'message' => 'Invalid offer id',
-            ], 400);
-        }
+        $this->validateRequest($request);
 
+        if (!is_numeric($id)) {
+            $id = $this->getNumericId($id);
+            if (!is_numeric($id)) {
+                return response()->json([
+                    'message' => 'Invalid offer id',
+                ], 400);
+            }
+        }
         try {
             $offer = Offer::find($id);
             if (!$offer) {
@@ -82,13 +104,34 @@ class OfferController extends Controller
                     'message' => 'Offer not found',
                 ], 404);
             }
-            $offer->update($request->all());
+            $productId = $request->productId;
+            if (!is_numeric($productId)) {
+                $productId = $this->getProductNumericId($request->productId);
+                if (!is_numeric($productId)) {
+                    return response()->json([
+                        'message' => 'Invalid product id',
+                    ], 400);
+                }
+            }
+            if (!Product::find($productId)) {
+                return response()->json([
+                    'message' => 'Product not found',
+                ], 404);
+            }
+
+            $offer->update([
+                'product_id' => $productId,
+                'seller_id' => $request->sellerId,
+                'price' => $request->price,
+                'condition' => $request->condition,
+                'availability' => $request->availability,
+            ]);
             return response()->json($offer, 200);
         } catch (\Exception $e) {
             $errorCode = $this->errorCodeId();
             Log::error('OfferController@update - ' . $errorCode . ' - ' . $e->getMessage());
             return response()->json([
-                'message' => 'Offer update failed: ',
+                'message' => 'Offer update failed',
                 'errorCode' => $errorCode,
             ], 400);
         }
@@ -96,6 +139,15 @@ class OfferController extends Controller
 
     public function destroy($id)
     {
+        if (!is_numeric($id)) {
+            $id = $this->getNumericId($id);
+            if (!is_numeric($id)) {
+                return response()->json([
+                    'message' => 'Invalid offer id',
+                ], 400);
+            }
+        }
+
         try {
             $offer = Offer::find($id);
 
@@ -114,5 +166,15 @@ class OfferController extends Controller
                 'errorCode' => $this->errorCodeId(),
             ], 400);
         }
+    }
+
+    private function getNumericId($id)
+    {
+        return substr($id, 2);
+    }
+
+    private function getProductNumericId($id)
+    {
+        return substr($id, 1);
     }
 }
