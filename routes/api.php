@@ -14,15 +14,27 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+/*
+* Authentication API
+*/
 
 Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login']);
-
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [\App\Http\Controllers\AuthController::class, 'logout']);
 });
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return [
+        'name' => $request->user()->name,
+        'email' => $request->user()->email,
+    ];
+});
+
+
+
+/*
+* Search API
+*/
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('search')->group(function () {
@@ -40,7 +52,7 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         Route::get('/', [\App\Http\Controllers\ProductController::class, 'index']);
         Route::get('/{id}', [\App\Http\Controllers\ProductController::class, 'show']);
         Route::post('/', [\App\Http\Controllers\ProductController::class, 'store']);
-        Route::post('/{id}', [\App\Http\Controllers\ProductController::class, 'update']); // PUT ya da PATCH kullanılmalı
+        Route::post('/{id}', [\App\Http\Controllers\ProductController::class, 'update']);
         Route::delete('/{id}', [\App\Http\Controllers\ProductController::class, 'destroy']);
     });
 });
@@ -55,7 +67,7 @@ Route::middleware(['auth:sanctum', 'throttle:200,60'])->group(function () {
         Route::get('/', [\App\Http\Controllers\OfferController::class, 'index']);
         Route::get('/{id}', [\App\Http\Controllers\OfferController::class, 'show']);
         Route::post('/', [\App\Http\Controllers\OfferController::class, 'store']);
-        Route::post('/{id}', [\App\Http\Controllers\OfferController::class, 'update']); // PUT ya da PATCH kullanılmalı
+        Route::post('/{id}', [\App\Http\Controllers\OfferController::class, 'update']);
         Route::delete('/{id}', [\App\Http\Controllers\OfferController::class, 'destroy']);
     });
 });
@@ -70,7 +82,7 @@ Route::middleware(['auth:sanctum', 'throttle:500,1440'])->group(function () {
         Route::get('/', [\App\Http\Controllers\OrderController::class, 'index']);
         Route::get('/{id}', [\App\Http\Controllers\OrderController::class, 'show']);
         Route::post('/', [\App\Http\Controllers\OrderController::class, 'store']);
-        Route::post('/{id}', [\App\Http\Controllers\OrderController::class, 'update']); // PUT ya da PATCH kullanılmalı
+        Route::post('/{id}', [\App\Http\Controllers\OrderController::class, 'update']);
         Route::delete('/{id}', [\App\Http\Controllers\OrderController::class, 'destroy']);
     });
 });
