@@ -26,6 +26,7 @@ class ProductController extends Controller
         $products = Product::all();
         if (count($products) === 0) {
             return response()->json([
+                'status' => 'error',
                 'message' => 'Product not found.',
             ], 404);
         }
@@ -62,6 +63,7 @@ class ProductController extends Controller
             $id = $this->getNumericId($id);
             if (!is_numeric($id)) {
                 return response()->json([
+                    'status' => 'error',
                     'message' => 'Invalid product id.',
                 ], 400);
             }
