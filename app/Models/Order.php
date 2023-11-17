@@ -9,20 +9,21 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'orderId';
-
-    // disable timestamps created_at & updated_at
-    public $timestamps = false;
 
     protected $fillable = [
-        'offerId',
+        'offer_id',
         'quantity',
-        'orderDate'
+        'order_date'
     ];
+
+    public function getIdAttribute($value)
+    {
+        return 'ORD' . strtoupper($value);
+    }
+
 
     public function offer()
     {
-        return $this->belongsTo(Offer::class, 'offerId');
+        return $this->belongsTo(Offer::class, 'offer_id');
     }
-
 }

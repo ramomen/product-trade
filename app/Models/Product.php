@@ -9,14 +9,15 @@ class Product extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'productId';
-
-    // disable timestamps created_at & updated_at
-    public $timestamps = false;
-
     protected $fillable = [
         'name',
         'category',
         'price',
     ];
+
+    // get ID attribute
+    public function getIdAttribute($value)
+    {
+        return 'P' . strtoupper($value);
+    }
 }
