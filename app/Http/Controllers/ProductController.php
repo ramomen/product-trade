@@ -70,6 +70,7 @@ class ProductController extends Controller
         $product = Product::find($id);
         if (!$product) {
             return response()->json([
+                'status' => 'error',
                 'message' => 'Product not found.',
             ], 404);
         }
@@ -89,6 +90,7 @@ class ProductController extends Controller
                 $id = $this->getNumericId($id);
                 if (!is_numeric($id)) {
                     return response()->json([
+                        'status' => 'error',
                         'message' => 'Invalid product id.',
                     ], 400);
                 }
@@ -96,6 +98,7 @@ class ProductController extends Controller
             $product = Product::find($id);
             if (is_null($product)) {
                 return response()->json([
+                    'status' => 'error',
                     'message' => 'Product not found.',
                 ], 404);
             }
@@ -112,6 +115,7 @@ class ProductController extends Controller
             $errorCode = $this->errorCodeId();
             Log::error('ProductController@update - ' . $errorCode . ' - ' . $e->getMessage());
             return response()->json([
+                'status' => 'error',
                 'message' => 'Product update failed',
                 'errorCode' => $errorCode
             ], 400);
@@ -125,6 +129,7 @@ class ProductController extends Controller
                 $id = $this->getNumericId($id);
                 if (!is_numeric($id)) {
                     return response()->json([
+                        'status' => 'error',
                         'message' => 'Invalid product id.',
                     ], 400);
                 }
@@ -133,6 +138,7 @@ class ProductController extends Controller
             $product = Product::find($id);
             if (is_null($product)) {
                 return response()->json([
+                    'status' => 'error',
                     'message' => 'Product not found.',
                 ], 404);
             }
@@ -142,6 +148,7 @@ class ProductController extends Controller
             $errorCode = $this->errorCodeId();
             Log::error('ProductController@destroy - ' . $errorCode . ' - ' . $e->getMessage());
             return response()->json([
+                'status' => 'error',
                 'message' => 'Product deletion failed',
                 'errorCode' => $errorCode,
             ], 400);
