@@ -31,3 +31,10 @@ php artisan app:setup
 
 
 This command will perform migrations, seed the database, and carry out any necessary initializations required for the application.
+
+API Documentation
+For detailed API endpoints and usage, please refer to our [Postman API Documentation](https://documenter.getpostman.com/view/17203929/2s9YXpVyGa
+).
+
+This documentation provides comprehensive information on the available API routes, expected request payloads, and example responses.
+
